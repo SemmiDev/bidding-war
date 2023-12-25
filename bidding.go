@@ -2,9 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Bid is a bid on an item
@@ -74,7 +75,7 @@ type Auction struct {
 	CurrentWinner *Bid `json:"currentWinner"`
 
 	// Bids is a list of all bids that have been placed on the item
-	Bids []Bid `json:"bids"`
+	Bids []*Bid `json:"bids"`
 }
 
 func (a *Auction) ChangeTime(endAt time.Time) {
@@ -143,7 +144,7 @@ func (a *Auction) setWinner(bid *Bid) {
 
 // addBidHistory adds a bid to the bid history
 func (a *Auction) addBidHistory(bid *Bid) {
-	a.Bids = append(a.Bids, *bid)
+	a.Bids = append(a.Bids, bid)
 }
 
 // GetWinner returns the current winner of the auction
@@ -155,9 +156,15 @@ func (a *Auction) GetWinner() *Bid {
 }
 
 // GetBidHistory returns the bid history
-func (a *Auction) GetBidHistory() []Bid {
+func (a *Auction) GetBidHistory() []*Bid {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	return a.Bids
+	// reverse the order of the bids
+	reversedBids := make([]*Bid, len(a.Bids))
+	for i, j := 0, len(a.Bids)-1; i < j; i, j = i+1, j-1 {
+		reversedBids[i], reversedBids[j] = a.Bids[j], a.Bids[i]
+	}
+
+	return reversedBids
 }
